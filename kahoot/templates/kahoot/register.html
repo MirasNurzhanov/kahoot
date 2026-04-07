@@ -1,0 +1,10 @@
+{% extends "kahoot/layout.html" %}
+
+{% block body %}
+  <form id="register-form" method="post">
+    {% csrf_token %}
+    <input id="reg_username" type="text" name="username" placeholder="Username">
+    <input id="reg_password" type="password" name="password" placeholder="Password">
+    <button id="reg_btn" type="button">Register</button>
+  </form>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "kahoot/layout.html" %}
+
+{% block body %}
+
+<form id="login-form" method="post">
+    {% csrf_token %}
+    <input id="log_username" type="text" name="username" placeholder="Username">
+    <input id="log_password" type="password" name="password" placeholder="Password">
+    <button id="log_btn" type="button">Login</button>
+</form>
+<h1 id="message"></h1>
+
+{% endblock %}

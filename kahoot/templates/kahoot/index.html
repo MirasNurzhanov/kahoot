@@ -1,0 +1,11 @@
+{% extends "kahoot/layout.html" %}
+
+{% block body %}
+
+ <h1>Welcome to our page!</h1>
+ <h2>Before we proceed please:
+    <a href="{% url 'kahoot:login_view' %}">Log In</a>
+    or
+    <a href="{% url 'kahoot:register' %}">Register</a>
+ </h2>
+{% endblock %}

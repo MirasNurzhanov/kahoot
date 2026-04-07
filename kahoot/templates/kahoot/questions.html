@@ -1,0 +1,24 @@
+{% extends "kahoot/layout.html" %}
+
+{% block body %}
+  <ol>
+    <p>Total questions: {{ questions|length }}</p>
+    {% for question in questions %}
+        <li>
+            <div class="q_a" data-category-id="{{ category.id }}">
+                {{ question }}
+
+                {% for answer in question.answers.all %}
+                    <button class="check-btn" data-id="{{ answer.id }}">
+                        {{ answer }}
+                    </button>
+                {% endfor %}
+
+                <h2 class="result"></h2>
+            </div>
+        </li>
+    {% endfor %}
+  </ol>   
+  <h2 class="score"></h2>
+  <button id="finish_quiz">FINISH</button>
+{% endblock %}

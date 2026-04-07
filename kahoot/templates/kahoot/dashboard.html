@@ -1,0 +1,19 @@
+{% extends "kahoot/layout.html" %}
+
+{% block body %} 
+ <h1>Hello , {{ user.username }}. This is our dashboard page where you can choose category.</h1>
+
+ <h2>Profile: 
+    {{ user.first_name }} {{ user.last_name }}
+ </h2>
+ <h1>Categories:
+    <ol>
+        {% for category in categories %}
+           <button class="cgr_btn" data-id="{{ category.id }}">{{ category.name }}</button>
+        {% endfor %}
+    </ol>
+ </h1>
+ 
+ 
+
+{% endblock %}
