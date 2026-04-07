@@ -1,0 +1,13 @@
+{% extends "kahoot/layout.html" %}
+
+{% block body %}
+   <h1>{{ user.first_name }} {{ user.last_name }}</h1>
+   <h2>History:</h2>
+
+   <ul>
+    {% for score in scores %}
+       <li>Category: {{ score.category.name }}</li>
+       <li>Score: {{ score.score }}</li>
+    {% endfor %}
+   </ul>
+{% endblock %}

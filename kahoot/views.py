@@ -12,12 +12,6 @@ def index(request):
         return HttpResponseRedirect("/kahoot/login/")
     return render(request , "kahoot/index.html")
 
-"""def show_questions(request , category_id):
-    questions = Question.objects.all()
-    return render(request, "kahoot/questions.html", {
-        "questions": questions
-    })
-"""
 
 def check_answer(request, answer_id):
     answer = get_object_or_404(Answer , id=answer_id)
@@ -106,3 +100,11 @@ def save_score(request):
         )
 
         return JsonResponse({"message": "Score saved successfully"})
+
+def profile_page(request):
+    user = request.user
+    scores = Score.objects.filter(user=user)
+    return render(request, "kahoot/profile.html" , {
+        "user": user,
+        "scores": scores
+    })

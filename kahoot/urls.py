@@ -10,5 +10,6 @@ urlpatterns = [
     path("register/" , views.register , name="register"),
     path("dashboard/" , views.dashboard , name="dashboard"),
     path("start_quiz/<int:category_id>/", views.start_quiz , name="start_quiz"),
-    path("save_score/", views.save_score , name="save_score")
+    path("save_score/", views.save_score , name="save_score"),
+    path("profile/" , views.profile_page , name="profile_page")
 ]
