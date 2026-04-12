@@ -12,14 +12,27 @@ def index(request):
         return HttpResponseRedirect("/kahoot/login/")
     return render(request , "kahoot/index.html")
 
+def check_answer(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid request method"}, status=400)
 
-def check_answer(request, answer_id):
-    answer = get_object_or_404(Answer , id=answer_id)
-    user = request.user
-    if answer.is_correct is False:
-        return JsonResponse({"message": "Incorrect answer.." ,"correct": False})
+    data = json.loads(request.body)
+    answer_id = data.get("answer_id")
+
+    answer = get_object_or_404(Answer, id=answer_id)
+
+    if not answer.is_correct:
+        return JsonResponse({
+            "message": "Incorrect answer..",
+            "correct": False,
+            "points": 0
+        })
     else:
-        return JsonResponse({"message": "The answer is correct!" , "points": 1 , "correct": True})
+        return JsonResponse({
+            "message": "The answer is correct!",
+            "correct": True,
+            "points": 1
+        })
     
 def register(request):
     if request.method == "POST":
@@ -69,13 +82,27 @@ def dashboard(request):
       "categories": categories
     })
 
-def start_quiz(request , category_id):
-    if category_id is not None:
-        category = Category.objects.get(id=category_id)
-        questions = Question.objects.filter(category_id=category_id)
-        return render(request , "kahoot/questions.html" , {
-            "questions": questions,
-            "category": category
+def start_quiz(request):
+    data = json.loads(request.body)
+    category_id = data.get("category_id")
+
+    questions = Question.objects.filter(category_id=category_id)
+
+    result = []
+
+    for q in questions:
+          result.append({
+            "id": q.id,
+            "text": q.text,
+            "answers": [
+                {"id": a.id, "text": a.text}
+                for a in q.answers.all()
+            ]
+        })
+
+    return JsonResponse({
+          "questions": result,
+          "category_id": category_id
         })
         
 
@@ -105,6 +132,6 @@ def profile_page(request):
     user = request.user
     scores = Score.objects.filter(user=user)
     return render(request, "kahoot/profile.html" , {
-        "user": user,
-        "scores": scores
-    })
+            "user": user,
+            "scores": scores
+        })
