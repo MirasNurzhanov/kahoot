@@ -56,7 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
         })
 
         container.appendChild(div)
-                // clear previous timer
+        // clear previous timer
         if (questionTimer) {
             clearTimeout(questionTimer)
         }
