@@ -1,10 +1,100 @@
 {% extends "kahoot/layout.html" %}
 
 {% block body %}
-  <form id="register-form" method="post">
-    {% csrf_token %}
-    <input id="reg_username" type="text" name="username" placeholder="Username">
-    <input id="reg_password" type="password" name="password" placeholder="Password">
-    <button id="reg_btn" type="button">Register</button>
-  </form>
+<style>
+  .auth-wrap { max-width: 440px; margin: 0 auto; }
+  .auth-header { text-align: center; margin-bottom: 2rem; }
+  .auth-icon { font-size: 3rem; display: block; margin-bottom: 0.8rem; animation: pulse-glow 3s ease-in-out infinite; }
+  @keyframes pulse-glow {
+    0%,100% { text-shadow: 0 0 20px var(--glow-purple); }
+    50%      { text-shadow: 0 0 40px var(--glow-cyan); }
+  }
+  .auth-switch { text-align: center; margin-top: 1.5rem; color: var(--text-dim); font-size: 0.95rem; }
+  .shake { animation: shake 0.4s ease; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-5px); }
+    80% { transform: translateX(5px); }
+  }
+</style>
+
+<div class="auth-wrap">
+  <div class="auth-header">
+    <span class="auth-icon">&#128640;</span>
+    <h1>Register</h1>
+    <h2>Create your account and join the galaxy</h2>
+  </div>
+
+  <div class="card" id="reg-card">
+    <div id="reg-msg"></div>
+
+    <form id="register-form" method="post">
+      {% csrf_token %}
+      <div class="field">
+        <label for="reg_username">Username</label>
+        <input id="reg_username" type="text" name="username" placeholder="choose_a_callsign" autocomplete="username" />
+      </div>
+      <div class="field">
+        <label for="reg_password">Password</label>
+        <input id="reg_password" type="password" name="password" placeholder="••••••••" autocomplete="new-password" />
+      </div>
+      <button id="reg_btn" type="button" class="btn btn-primary" style="width:100%; margin-top:0.5rem;">
+        &#128640; Create Account
+      </button>
+    </form>
+  </div>
+
+  <p class="auth-switch">
+    Already have an account? <a href="{% url 'kahoot:login_view' %}">Log in</a>
+  </p>
+</div>
+
+<script>
+  document.getElementById('reg_btn').addEventListener('click', async () => {
+    const username = document.getElementById('reg_username').value.trim();
+    const password = document.getElementById('reg_password').value;
+    const msgEl    = document.getElementById('reg-msg');
+    const card     = document.getElementById('reg-card');
+
+    if (!username || !password) {
+      msgEl.innerHTML = '<div class="alert alert-error">Please fill in all fields.</div>';
+      card.classList.add('shake');
+      setTimeout(() => card.classList.remove('shake'), 400);
+      return;
+    }
+
+    const btn = document.getElementById('reg_btn');
+    btn.textContent = 'Creating…';
+    btn.disabled = true;
+
+    try {
+      const csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
+      const res = await fetch('{% url "kahoot:register" %}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrf },
+        body: new URLSearchParams({ username, password })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        msgEl.innerHTML = '<div class="alert alert-success">&#10003; Account created! Redirecting…</div>';
+        setTimeout(() => window.location.href = '{% url "kahoot:dashboard" %}', 900);
+      } else {
+        msgEl.innerHTML = `<div class="alert alert-error">${data.message || 'Registration failed.'}</div>`;
+        card.classList.add('shake');
+        setTimeout(() => card.classList.remove('shake'), 400);
+        btn.textContent = '🚀 Create Account';
+        btn.disabled = false;
+      }
+    } catch {
+      document.getElementById('register-form').submit();
+    }
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('reg_btn').click();
+  });
+</script>
 {% endblock %}

@@ -1,22 +1,119 @@
 {% extends "kahoot/layout.html" %}
 
 {% block body %}
-Leaderboard: 
+<style>
+  .lb-header { text-align: center; margin-bottom: 3rem; }
+  .lb-header h1 { font-size: 2.2rem; }
+  .lb-header h2 { margin-top: 0.4rem; }
 
-{{ data.0.category.name }}:
+  .lb-table-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    backdrop-filter: blur(12px);
+    animation: card-in 0.55s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  .lb-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .lb-table thead tr {
+    background: rgba(168,85,247,0.1);
+    border-bottom: 1px solid var(--border);
+  }
+  .lb-table th { 
+    padding: 1rem 1.5rem;
+    font-family: var(--font-head);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    text-align: left;
+    font-weight: 600;
+  }
+  .lb-table th:last-child { text-align: right; }
+  .lb-table td {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(160,120,255,0.08);
+    color: var(--text-main);
+    font-size: 1rem;
+  }
+  .lb-table tr:last-child td { border-bottom: none; }
+  .lb-table tbody tr {
+    transition: background 0.2s;
+    animation: card-in 0.45s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  .lb-table tbody tr:hover { background: rgba(168,85,247,0.07); }
 
-    <ul>
-        {% for score in data.0.scores %}
-           <li>{{ score.user.username }} - {{ score.score }} </li>
-        {% endfor %}
-    </ul>
+  .rank-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    font-family: var(--font-head);
+    font-size: 0.85rem;
+    font-weight: 800;
+  }
+  .rank-1 { background: linear-gradient(135deg,#fbbf24,#f59e0b); color: #1c1300; box-shadow: 0 0 16px rgba(251,191,36,0.5); }
+  .rank-2 { background: linear-gradient(135deg,#94a3b8,#cbd5e1); color: #1c1c2e; }
+  .rank-3 { background: linear-gradient(135deg,#c27c2f,#d97706); color: #1c1300; }
+  .rank-other { background: rgba(255,255,255,0.07); color: var(--text-dim); }
 
-{{ data.1.category.name }}:
-    <ul>
-        {% for score in data.1.scores %}
-           <li>{{ score.user.username }} - {{ score.score }} </li>
-        {% endfor %}
-    </ul>
-    
+  .score-cell {
+    text-align: right;
+    font-family: var(--font-head);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .username-cell { font-weight: 600; }
 
+  .empty-state {
+    text-align: center;
+    padding: 4rem 1rem;
+    color: var(--text-dim);
+  }
+</style>
+
+<div class="lb-header">
+  <h1>&#127942; Leaderboard</h1>
+  <h2>The galaxy's greatest minds, ranked</h2>
+</div>
+
+<div class="lb-table-wrap">
+  {% if leaderboard %}
+  <table class="lb-table">
+    <thead>
+      <tr>
+        <th style="width:60px;">Rank</th>
+        <th>Player</th>
+        <th>Category</th>
+        <th style="text-align:right;">Score</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for entry in leaderboard %}
+      <tr style="animation-delay: {{ forloop.counter0 }}60ms">
+        <td>
+          <span class="rank-badge {% if forloop.counter == 1 %}rank-1{% elif forloop.counter == 2 %}rank-2{% elif forloop.counter == 3 %}rank-3{% else %}rank-other{% endif %}">
+            {% if forloop.counter == 1 %}&#127941;{% elif forloop.counter == 2 %}&#9651;{% elif forloop.counter == 3 %}&#9652;{% else %}{{ forloop.counter }}{% endif %}
+          </span>
+        </td>
+        <td class="username-cell">{{ entry.user.username }}</td>
+        <td style="color:var(--text-dim);">{{ entry.category.name }}</td>
+        <td class="score-cell">&#9733; {{ entry.score }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">
+    <p style="font-size:3rem; margin-bottom:1rem; opacity:0.4;">&#127942;</p>
+    <p>No scores yet. Be the first to claim the throne!</p>
+    <a href="{% url 'kahoot:dashboard' %}" class="btn btn-primary" style="margin-top:1.2rem; display:inline-flex;">&#9654; Start a Quiz</a>
+  </div>
+  {% endif %}
+</div>
 {% endblock %}

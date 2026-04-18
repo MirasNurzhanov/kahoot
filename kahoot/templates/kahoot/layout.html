@@ -1,15 +1,379 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <title>MyPage</title>
-        <meta charset="UTF-8">
-        <link rel="stylesheet" href="{% static 'kahoot/app.css' %}">
-    </head>
-    <body>
-        {% block body %}
-        {% endblock %}
-        <script src="{% static 'kahoot/app.js' %}"></script>
-    </body>
-    
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GalaxyQuiz</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-deep:    #02010a;
+      --bg-mid:     #07052a;
+      --bg-card:    rgba(255,255,255,0.04);
+      --border:     rgba(160,120,255,0.25);
+      --glow-purple:#a855f7;
+      --glow-blue:  #3b82f6;
+      --glow-cyan:  #22d3ee;
+      --accent:     #c084fc;
+      --text-main:  #e8e0ff;
+      --text-dim:   #7c6faa;
+      --font-head:  'Orbitron', sans-serif;
+      --font-body:  'Rajdhani', sans-serif;
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg-deep);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      font-size: 17px;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── Starfield ── */
+    #stars-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── Nebula blobs ── */
+    .nebula {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(90px);
+      opacity: 0.18;
+      pointer-events: none;
+      z-index: 0;
+      animation: nebula-drift 20s ease-in-out infinite alternate;
+    }
+    .nebula-1 { width: 600px; height: 600px; background: var(--glow-purple); top: -150px; left: -100px; }
+    .nebula-2 { width: 500px; height: 500px; background: var(--glow-blue);   bottom: -100px; right: -80px; animation-delay: -10s; }
+    .nebula-3 { width: 350px; height: 350px; background: var(--glow-cyan);   top: 40%; left: 55%; animation-delay: -5s; opacity: 0.10; }
+    @keyframes nebula-drift {
+      from { transform: scale(1) translate(0,0); }
+      to   { transform: scale(1.12) translate(20px, 30px); }
+    }
+
+    /* ── Navbar ── */
+    nav {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2.5rem;
+      background: rgba(7,5,42,0.7);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-family: var(--font-head);
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      text-decoration: none;
+      text-shadow: 0 0 18px var(--glow-purple);
+    }
+    .nav-links { display: flex; gap: 1.5rem; align-items: center; }
+    .nav-links a {
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      color: var(--text-dim);
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: color 0.25s, text-shadow 0.25s;
+    }
+    .nav-links a:hover {
+      color: var(--accent);
+      text-shadow: 0 0 12px var(--glow-purple);
+    }
+    .nav-btn {
+      padding: 0.45rem 1.2rem;
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      background: rgba(168,85,247,0.12);
+      color: var(--accent) !important;
+      transition: background 0.25s, box-shadow 0.25s !important;
+    }
+    .nav-btn:hover {
+      background: rgba(168,85,247,0.28) !important;
+      box-shadow: 0 0 18px rgba(168,85,247,0.4);
+    }
+
+    /* ── Page wrapper ── */
+    .page-wrap {
+      position: relative;
+      z-index: 5;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 3.5rem 2rem 4rem;
+    }
+
+    /* ── Glass card ── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2.5rem;
+      backdrop-filter: blur(14px);
+      animation: card-in 0.55s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    @keyframes card-in {
+      from { opacity: 0; transform: translateY(28px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Headings ── */
+    h1 {
+      font-family: var(--font-head);
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      color: #fff;
+      text-shadow: 0 0 24px var(--glow-purple);
+      margin-bottom: 0.6rem;
+    }
+    h2 {
+      font-family: var(--font-body);
+      font-size: 1.15rem;
+      font-weight: 400;
+      color: var(--text-dim);
+      letter-spacing: 0.04em;
+      margin-bottom: 1.5rem;
+    }
+
+    /* ── Inputs ── */
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-bottom: 1.2rem;
+    }
+    label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 0.75rem 1.1rem;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-main);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.25s, box-shadow 0.25s;
+    }
+    input[type="text"]:focus, input[type="password"]:focus {
+      border-color: var(--glow-purple);
+      box-shadow: 0 0 0 3px rgba(168,85,247,0.18);
+    }
+    input::placeholder { color: rgba(120,100,170,0.6); }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem 2rem;
+      font-family: var(--font-head);
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-radius: 40px;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.18s, box-shadow 0.18s, background 0.18s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #7c3aed, #a855f7);
+      color: #fff;
+      box-shadow: 0 0 20px rgba(124,58,237,0.45);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 36px rgba(168,85,247,0.7);
+    }
+    .btn-primary:active { transform: scale(0.97); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover {
+      background: rgba(168,85,247,0.12);
+      border-color: var(--accent);
+    }
+
+    /* ── Links ── */
+    a {
+      color: var(--accent);
+      text-decoration: none;
+      transition: text-shadow 0.2s;
+    }
+    a:hover { text-shadow: 0 0 10px var(--glow-purple); }
+
+    /* ── Divider ── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      margin: 1.5rem 0;
+    }
+
+    /* ── Messages / alerts ── */
+    .alert {
+      padding: 0.75rem 1.2rem;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      margin-bottom: 1.2rem;
+      border: 1px solid;
+      animation: card-in 0.35s ease both;
+    }
+    .alert-error   { background: rgba(239,68,68,0.1);  border-color: rgba(239,68,68,0.4);  color: #fca5a5; }
+    .alert-success { background: rgba(34,211,238,0.08); border-color: rgba(34,211,238,0.3); color: #67e8f9; }
+
+    /* ── Shooting stars (CSS-only) ── */
+    .shoot-star {
+      position: fixed;
+      top: 0; left: 0;
+      width: 2px; height: 80px;
+      background: linear-gradient(180deg, rgba(200,160,255,0.9), transparent);
+      border-radius: 2px;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 1;
+      transform-origin: top center;
+    }
+    @keyframes shoot {
+      0%   { opacity: 0; transform: rotate(var(--angle)) translate(var(--sx), var(--sy)); }
+      10%  { opacity: 1; }
+      100% { opacity: 0; transform: rotate(var(--angle)) translate(calc(var(--sx) + 600px), calc(var(--sy) + 600px)); }
+    }
+    .shoot-star:nth-child(1) { --angle:30deg; --sx:10vw;  --sy:-20px; animation: shoot 4s 0s  infinite; }
+    .shoot-star:nth-child(2) { --angle:25deg; --sx:50vw;  --sy:-20px; animation: shoot 4s 2s  infinite; }
+    .shoot-star:nth-child(3) { --angle:35deg; --sx:80vw;  --sy:-20px; animation: shoot 4s 5s  infinite; }
+    .shoot-star:nth-child(4) { --angle:20deg; --sx:30vw;  --sy:-20px; animation: shoot 4s 7s  infinite; }
+    .shoot-star:nth-child(5) { --angle:28deg; --sx:65vw;  --sy:-20px; animation: shoot 4s 11s infinite; }
+
+    /* ── Footer ── */
+    footer {
+      position: relative;
+      z-index: 5;
+      text-align: center;
+      padding: 1.5rem;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      border-top: 1px solid var(--border);
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background layers -->
+  <canvas id="stars-canvas"></canvas>
+  <div class="nebula nebula-1"></div>
+  <div class="nebula nebula-2"></div>
+  <div class="nebula nebula-3"></div>
+  <div class="shoot-star"></div>
+  <div class="shoot-star"></div>
+  <div class="shoot-star"></div>
+  <div class="shoot-star"></div>
+  <div class="shoot-star"></div>
+
+  <!-- Navbar -->
+  <nav>
+    <a href="{% url 'kahoot:index' %}" class="nav-logo">&#9733; GalaxyQuiz</a>
+    <div class="nav-links">
+      {% if user.is_authenticated %}
+        <a href="{% url 'kahoot:dashboard' %}">Dashboard</a>
+        <a href="{% url 'kahoot:leaderboard' %}">Leaderboard</a>
+        <a href="{% url 'kahoot:profile_page' %}">Profile</a>
+        <a href="{% url 'kahoot:logout_view' %}" class="nav-btn">Log Out</a>
+      {% else %}
+        <a href="{% url 'kahoot:login_view' %}">Log In</a>
+        <a href="{% url 'kahoot:register' %}" class="nav-btn">Register</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <!-- Main content -->
+  <main class="page-wrap">
+    {% block body %}{% endblock %}
+  </main>
+
+  <footer>
+    &copy; 2025 GalaxyQuiz &mdash; explore the universe of knowledge
+  </footer>
+
+  <!-- Starfield canvas -->
+  <script>
+    (function() {
+      const canvas = document.getElementById('stars-canvas');
+      const ctx = canvas.getContext('2d');
+      let stars = [];
+
+      function resize() {
+        canvas.width  = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+
+      function init() {
+        stars = [];
+        const count = Math.floor((canvas.width * canvas.height) / 3500);
+        for (let i = 0; i < count; i++) {
+          stars.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            r: Math.random() * 1.4 + 0.2,
+            alpha: Math.random() * 0.7 + 0.1,
+            speed: Math.random() * 0.004 + 0.001,
+            phase: Math.random() * Math.PI * 2,
+            color: ['#ffffff','#c4b5fd','#bae6fd','#e9d5ff'][Math.floor(Math.random()*4)]
+          });
+        }
+      }
+
+      let t = 0;
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        t += 0.016;
+        for (const s of stars) {
+          const a = s.alpha * (0.6 + 0.4 * Math.sin(t * s.speed * 60 + s.phase));
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          ctx.fillStyle = s.color;
+          ctx.globalAlpha = a;
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        requestAnimationFrame(draw);
+      }
+
+      resize();
+      init();
+      draw();
+      window.addEventListener('resize', () => { resize(); init(); });
+    })();
+  </script>
+  <script src="{% static 'kahoot/app.js' %}"></script>
+</body>
 </html>

@@ -1,24 +1,189 @@
 {% extends "kahoot/layout.html" %}
 
-{% block body %} 
+{% block body %}
+<style>
+  .dash-header { margin-bottom: 2.5rem; }
+  .dash-header h1 { font-size: 1.8rem; }
+  .dash-header h1 span { color: var(--accent); }
+  .dash-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+  .dash-meta p { color: var(--text-dim); font-size: 1rem; }
 
- <a href="{% url 'kahoot:leaderboard' %}">Leaderboard</a>
- <div id="categories-block">
-   <h1>Hello , {{ user.username }}. This is our dashboard page where you can choose category.</h1>
+  /* Category grid */
+  .section-title {
+    font-family: var(--font-head);
+    font-size: 0.8rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 1rem;
+  }
+  .categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+  }
+  .cgr_btn {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1.5rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    color: var(--text-main);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: transform 0.22s, border-color 0.22s, box-shadow 0.22s, background 0.22s;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    animation: card-in 0.5s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  .cgr_btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(168,85,247,0.18), transparent 70%);
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+  .cgr_btn:hover::before { opacity: 1; }
+  .cgr_btn:hover {
+    transform: translateY(-4px) scale(1.02);
+    border-color: var(--glow-purple);
+    box-shadow: 0 6px 28px rgba(124,58,237,0.35);
+  }
+  .cgr_btn:active { transform: scale(0.97); }
+  .cgr_btn .cat-icon { font-size: 1.8rem; display: block; }
 
-   <h2>User: 
-      {{ user.first_name }} {{ user.last_name }} 
-      <a href="{% url 'kahoot:profile_page' %}">Go to Profile</a>
-   </h2>
-   <h1>Categories:
-      <ol>
-         {% for category in categories %}
-            <button class="cgr_btn" data-id="{{ category.id }}">{{ category.name }}</button>
-         {% endfor %}
-      </ol>
-   </h1>
- </div>
- <div id="quiz-container"></div> 
- 
+  /* Quiz container */
+  #quiz-container {
+    margin-top: 1.5rem;
+  }
+  .quiz-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    backdrop-filter: blur(12px);
+    animation: card-in 0.45s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  .quiz-progress-bar {
+    height: 4px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 4px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+  }
+  .quiz-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--glow-purple), var(--glow-cyan));
+    border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+  .quiz-q-text {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+  }
+  .quiz-answers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+  }
+  @media (max-width: 520px) { .quiz-answers { grid-template-columns: 1fr; } }
+  .answer-btn {
+    padding: 0.9rem 1.2rem;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text-main);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  }
+  .answer-btn:hover:not(:disabled) {
+    background: rgba(168,85,247,0.16);
+    border-color: var(--accent);
+    transform: translateX(4px);
+  }
+  .answer-btn.correct  { background: rgba(34,197,94,0.18); border-color: #4ade80; color: #86efac; }
+  .answer-btn.wrong    { background: rgba(239,68,68,0.18);  border-color: #f87171; color: #fca5a5; }
+  .quiz-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+  .q-counter { font-size: 0.85rem; color: var(--text-dim); letter-spacing: 0.06em; font-family: var(--font-head); }
+  .score-badge {
+    font-family: var(--font-head);
+    font-size: 0.85rem;
+    padding: 0.3rem 0.9rem;
+    border-radius: 20px;
+    background: rgba(168,85,247,0.15);
+    border: 1px solid var(--border);
+    color: var(--accent);
+  }
+  .quiz-result {
+    text-align: center;
+    padding: 2rem 1rem;
+  }
+  .quiz-result h2 {
+    font-family: var(--font-head);
+    font-size: 1.4rem;
+    color: #fff;
+    margin-bottom: 0.5rem;
+  }
+  .quiz-result .final-score {
+    font-size: 3.5rem;
+    font-family: var(--font-head);
+    font-weight: 800;
+    color: var(--accent);
+    text-shadow: 0 0 30px var(--glow-purple);
+    display: block;
+    margin: 0.5rem 0 1.5rem;
+  }
+  @keyframes pulse-glow {
+    0%,100% { text-shadow: 0 0 20px var(--glow-purple); }
+    50%      { text-shadow: 0 0 40px var(--glow-cyan); }
+  }
+</style>
+
+<div class="dash-header">
+  <h1>Hello, <span>{{ user.username }}</span> &#127775;</h1>
+  <div class="dash-meta">
+    <p>{{ user.first_name }} {{ user.last_name }} &mdash; Choose a category below to start</p>
+    <div style="display:flex; gap:0.8rem;">
+      <a href="{% url 'kahoot:leaderboard' %}" class="btn btn-ghost" style="padding:0.45rem 1rem; font-size:0.8rem;">&#127942; Leaderboard</a>
+      <a href="{% url 'kahoot:profile_page' %}" class="btn btn-ghost" style="padding:0.45rem 1rem; font-size:0.8rem;">&#128100; Profile</a>
+    </div>
+  </div>
+</div>
+
+<p class="section-title">&#9733; Quiz Categories</p>
+<div id="categories-block" class="categories-grid">
+  {% for category in categories %}
+  <button class="cgr_btn" data-id="{{ category.id }}" style="animation-delay: {{ forloop.counter0 }}00ms">
+    <span class="cat-icon">&#127775;</span>
+    {{ category.name }}
+  </button>
+  {% endfor %}
+</div>
+
+<div id="quiz-container"></div>
+
 
 {% endblock %}

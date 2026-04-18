@@ -1,13 +1,116 @@
 {% extends "kahoot/layout.html" %}
 
 {% block body %}
+<style>
+  .auth-wrap {
+    max-width: 440px;
+    margin: 0 auto;
+  }
+  .auth-header { text-align: center; margin-bottom: 2rem; }
+  .auth-header .auth-icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 0.8rem;
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+  @keyframes pulse-glow {
+    0%,100% { text-shadow: 0 0 20px var(--glow-purple); }
+    50%      { text-shadow: 0 0 40px var(--glow-cyan); }
+  }
+  .auth-switch {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: var(--text-dim);
+    font-size: 0.95rem;
+  }
 
-<form id="login-form" method="post">
-    {% csrf_token %}
-    <input id="log_username" type="text" name="username" placeholder="Username">
-    <input id="log_password" type="password" name="password" placeholder="Password">
-    <button id="log_btn" type="button">Login</button>
-</form>
-<h1 id="message"></h1>
+  /* Shake animation on error */
+  .shake { animation: shake 0.4s ease; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20%     { transform: translateX(-8px); }
+    40%     { transform: translateX(8px); }
+    60%     { transform: translateX(-5px); }
+    80%     { transform: translateX(5px); }
+  }
+</style>
 
+<div class="auth-wrap">
+  <div class="auth-header">
+    <span class="auth-icon">&#128273;</span>
+    <h1>Log In</h1>
+    <h2>Enter your credentials to access the cosmos</h2>
+  </div>
+
+  <div class="card" id="login-card">
+    <div id="message"></div>
+
+    <form id="login-form" method="post">
+      {% csrf_token %}
+      <div class="field">
+        <label for="log_username">Username</label>
+        <input id="log_username" type="text" name="username" placeholder="your_username" autocomplete="username" />
+      </div>
+      <div class="field">
+        <label for="log_password">Password</label>
+        <input id="log_password" type="password" name="password" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+      <button id="log_btn" type="button" class="btn btn-primary" style="width:100%; margin-top:0.5rem;">
+        &#9658; Launch
+      </button>
+    </form>
+  </div>
+
+  <p class="auth-switch">
+    No account yet? <a href="{% url 'kahoot:register' %}">Register here</a>
+  </p>
+</div>
+
+<script>
+  document.getElementById('log_btn').addEventListener('click', async () => {
+    const username = document.getElementById('log_username').value.trim();
+    const password = document.getElementById('log_password').value;
+    const msgEl = document.getElementById('message');
+    const card  = document.getElementById('login-card');
+
+    if (!username || !password) {
+      msgEl.innerHTML = '<div class="alert alert-error">Please fill in all fields.</div>';
+      card.classList.add('shake');
+      setTimeout(() => card.classList.remove('shake'), 400);
+      return;
+    }
+
+    const btn = document.getElementById('log_btn');
+    btn.textContent = 'Launching…';
+    btn.disabled = true;
+
+    try {
+      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+      const res = await fetch('{% url "kahoot:login_view" %}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrfToken },
+        body: new URLSearchParams({ username, password })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        msgEl.innerHTML = '<div class="alert alert-success">&#10003; Authenticated! Entering dashboard…</div>';
+        setTimeout(() => window.location.href = '{% url "kahoot:dashboard" %}', 900);
+      } else {
+        msgEl.innerHTML = `<div class="alert alert-error">${data.message || 'Invalid credentials.'}</div>`;
+        card.classList.add('shake');
+        setTimeout(() => card.classList.remove('shake'), 400);
+        btn.textContent = '▶ Launch';
+        btn.disabled = false;
+      }
+    } catch {
+      document.getElementById('login-form').submit();
+    }
+  });
+
+  /* Allow Enter key */
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('log_btn').click();
+  });
+</script>
 {% endblock %}

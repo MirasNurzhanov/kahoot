@@ -1,18 +1,15 @@
 console.log("JS loaded..")
 document.addEventListener("DOMContentLoaded", () => {
-    //Defining DOM elements: 
 
     const buttons_category = document.querySelectorAll(".cgr_btn")
     const message = document.querySelector("#message")
     const log_btn = document.querySelector("#log_btn")
     const reg_btn = document.querySelector("#reg_btn")
 
-    
     function getCSRFToken() {
         const name = "csrftoken="
         const decodedCookies = decodeURIComponent(document.cookie)
         const cookies = decodedCookies.split(";")
-    
         for (let cookie of cookies) {
             cookie = cookie.trim()
             if (cookie.startsWith(name)) {
@@ -22,247 +19,164 @@ document.addEventListener("DOMContentLoaded", () => {
         return null
     }
 
-
-    
-    // ================= GLOBAL STATE =================
     let questions = []
     let currentQuestionIndex = 0
     let currentCategoryId = null
     let score = 0
     let questionTimer = null
 
-
-    // ================= SHOW QUESTION =================
     function showQuestion() {
         const container = document.querySelector("#quiz-container")
         container.innerHTML = ""
-
         const question = questions[currentQuestionIndex]
-
-        const div = document.createElement("div")
-        div.classList.add("q_a")
-
-        const questionText = document.createElement("p")
-        questionText.textContent = `${currentQuestionIndex + 1}. ${question.text}`
-        div.appendChild(questionText)
-
+        const pct = Math.round((currentQuestionIndex / questions.length) * 100)
+        container.innerHTML = `
+            <div class="quiz-card">
+                <div class="quiz-progress-bar">
+                    <div class="quiz-progress-fill" style="width:${pct}%"></div>
+                </div>
+                <div class="quiz-meta">
+                    <span class="q-counter">Question ${currentQuestionIndex + 1} / ${questions.length}</span>
+                    <span class="score-badge">&#9733; ${score}</span>
+                </div>
+                <p class="quiz-q-text">${currentQuestionIndex + 1}. ${question.question}</p>
+                <div class="quiz-answers" id="answers-box"></div>
+            </div>`
+        const answersBox = container.querySelector("#answers-box")
         question.answers.forEach(answer => {
             const btn = document.createElement("button")
-            btn.classList.add("check-btn")
+            btn.classList.add("answer-btn")
             btn.dataset.id = answer.id
             btn.textContent = answer.text
-
-            div.appendChild(btn)
+            answersBox.appendChild(btn)
         })
-
-        container.appendChild(div)
-        // clear previous timer
-        if (questionTimer) {
-            clearTimeout(questionTimer)
-        }
-
-        // start new timer (10 seconds)
+        if (questionTimer) clearTimeout(questionTimer)
         questionTimer = setTimeout(() => {
-            console.log("Time's up!")
-
             currentQuestionIndex++
-
-            if (currentQuestionIndex < questions.length) {
-                showQuestion()
-            } else {
-                finishQuiz()
-            }
-
-        }, 10000) // 10 sec
+            if (currentQuestionIndex < questions.length) showQuestion()
+            else finishQuiz()
+        }, 10000)
     }
 
-
-    // ================= RENDER QUIZ =================
     function renderQuiz(data) {
         currentCategoryId = data.category_id
         questions = data.questions
         currentQuestionIndex = 0
         score = 0
-
         showQuestion()
     }
 
-
-    // ================= FINISH QUIZ =================
     async function finishQuiz() {
-        console.log("Finishing quiz...")
-
         const csrf = getCSRFToken()
-
         const response = await fetch("/kahoot/save_score/", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": csrf
-            },
-            body: JSON.stringify({
-                score: score,
-                category: currentCategoryId
-            })
+            headers: { "Content-Type": "application/json", "X-CSRFToken": csrf },
+            body: JSON.stringify({ score: score, category_id: currentCategoryId })
         })
-
-        if (!response.ok) {
-            console.error("Failed to save score")
-            return
-        }
-
+        if (!response.ok) console.error("Failed to save score")
         const container = document.querySelector("#quiz-container")
-
         container.innerHTML = `
-            <h1>🎉 Quiz Finished!</h1>
-            <h2>Your final score: ${score}</h2>
-            <p>Redirecting to dashboard in 3 seconds...</p>
-        `
-
-        setTimeout(() => {
-            window.location.href = "/kahoot/dashboard/"
-        }, 3000)
+            <div class="quiz-card quiz-result">
+                <h2>&#127942; Quiz Complete!</h2>
+                <span class="final-score">${score} / ${questions.length}</span>
+                <p style="color:var(--text-dim); margin-bottom:1.5rem;">
+                    ${score === questions.length ? 'Perfect score! You are a galaxy brain.' :
+                      score >= questions.length * 0.7 ? 'Great job, space explorer!' : 'Keep training, cadet!'}
+                </p>
+                <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
+                    <button class="btn btn-primary" onclick="location.reload()">&#9654; Play Again</button>
+                    <a href="/kahoot/leaderboard/" class="btn btn-ghost">&#127942; Leaderboard</a>
+                </div>
+            </div>`
     }
 
-
-    // ================= CLICK HANDLER =================
     document.addEventListener("click", async function(e) {
-
-        // ===== ANSWER CLICK =====
-        if (e.target.classList.contains("check-btn")) {
-            console.log("Answer clicked")
-
+        if (e.target.classList.contains("answer-btn")) {
             const button = e.target
-            const q_a_box = button.closest(".q_a")
-            const allButtons = q_a_box.querySelectorAll("button")
+            const allButtons = document.querySelectorAll(".answer-btn")
             const answerId = button.dataset.id
             clearTimeout(questionTimer)
-
+            allButtons.forEach(btn => btn.disabled = true)
             const response = await fetch("/kahoot/api/check_answer/", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": getCSRFToken()
-                },
-                body: JSON.stringify({
-                    answer_id: answerId
-                })
+                headers: { "Content-Type": "application/json", "X-CSRFToken": getCSRFToken() },
+                body: JSON.stringify({ answer_id: answerId })
             })
-
-            if (!response.ok) {
-                return console.log("Response not okay..")
-            }
-
+            if (!response.ok) return console.log("Response not okay..")
             const data = await response.json()
-
-            // ===== UI FEEDBACK =====
             if (data.correct) {
                 score += data.points
                 button.classList.add("correct")
             } else {
-                button.classList.add("incorrect")
+                button.classList.add("wrong")
+                allButtons.forEach(btn => {
+                    if (btn.dataset.id == data.correct_id) btn.classList.add("correct")
+                })
             }
-
-            // disable all buttons
-            allButtons.forEach(btn => btn.disabled = true)
-
-            console.log("Score:", score)
-
-            // ===== NEXT QUESTION =====
             setTimeout(() => {
                 currentQuestionIndex++
-
-                if (currentQuestionIndex < questions.length) {
-                    showQuestion()
-                } else {
-                    finishQuiz()
-                }
-            }, 800) // small delay for UX
+                if (currentQuestionIndex < questions.length) showQuestion()
+                else finishQuiz()
+            }, 800)
         }
     })
 
-    //QUIZ STARTS HERE 
-    if (buttons_category) {
-        buttons_category.forEach(button => { 
-            button.addEventListener("click", async function(e) {
-                const category_id = e.target.dataset.id
-
+    if (buttons_category.length > 0) {
+        buttons_category.forEach(button => {
+            button.addEventListener("click", async function() {
+                const category_id = button.dataset.id
                 const categoriesBlock = document.querySelector("#categories-block")
-                categoriesBlock.style.display = "none"
-    
-                const response = await fetch("/kahoot/api/start_quiz/", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": getCSRFToken()
-                    },
-                    body: JSON.stringify({ category_id })
+                if (categoriesBlock) categoriesBlock.style.display = "none"
+                const quizContainer = document.querySelector("#quiz-container")
+                quizContainer.innerHTML = `
+                    <div class="quiz-card" style="text-align:center; padding:3rem;">
+                        <div style="font-size:2rem;">&#9733;</div>
+                        <p style="margin-top:1rem; color:var(--text-dim);">Loading questions…</p>
+                    </div>`
+                const response = await fetch(`/kahoot/api/start_quiz/?category_id=${category_id}`, {
+                    method: "GET"
                 })
-    
                 const data = await response.json()
-                renderQuiz(data)   // 👈 THIS is your “navigation”
+                renderQuiz(data)
             })
         })
     }
-    
-    
-    //Register FORM handling: 
+
     if (reg_btn) {
-        reg_btn.addEventListener("click" , async(e) => {
+        reg_btn.addEventListener("click", async (e) => {
             e.preventDefault()
-
-            const reg_username = document.querySelector("#reg_username")
-            const reg_password = document.querySelector("#reg_password")
-            const csrf = getCSRFToken();
-
+            const username = document.querySelector("#reg_username").value.trim()
+            const password = document.querySelector("#reg_password").value
             const response = await fetch("/kahoot/register/", {
                 method: "POST",
-                headers: {"Content-Type": "application/json" ,"X-CSRFToken": csrf},
-                body: JSON.stringify({username: reg_username.value , password:reg_password.value})
-            })    
+                headers: { "Content-Type": "application/x-www-form-urlencoded", "X-CSRFToken": getCSRFToken() },
+                body: new URLSearchParams({ username, password })
+            })
+            const data = await response.json()
+            if (data.success) window.location.href = "/kahoot/dashboard/"
+            else {
+                const msg = document.querySelector("#reg-msg")
+                if (msg) msg.innerHTML = `<div class="alert alert-error">${data.message}</div>`
+            }
         })
     }
 
-    //Login Form handling: 
     if (log_btn) {
-        log_btn.addEventListener("click" , async(e) => {
+        log_btn.addEventListener("click", async (e) => {
             e.preventDefault()
-
-            const log_username = document.querySelector("#log_username")
-            const log_password = document.querySelector("#log_password")
-            const csrf = getCSRFToken();
-            
-
-            console.log("Submitting login...");
-
+            const username = document.querySelector("#log_username").value.trim()
+            const password = document.querySelector("#log_password").value
             const response = await fetch("/kahoot/login/", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": csrf
-                },
-                body: JSON.stringify({
-                username: log_username.value,
-                password: log_password.value
-                })
-            });
-
-            console.log("Response status:", response.status);
-
-            const data = await response.json();
-            console.log("Response data:", data);
-
-            if (!response.ok) {
-               message.textContent = data.error || data.message;
-               return;
-            } 
+                headers: { "Content-Type": "application/x-www-form-urlencoded", "X-CSRFToken": getCSRFToken() },
+                body: new URLSearchParams({ username, password })
+            })
+            const data = await response.json()
+            if (data.success) window.location.href = "/kahoot/dashboard/"
             else {
-                if (data.redirect) {
-                    window.location.href = data.redirect;
-                } else {
-                    console.error("Redirect missing:", data);
-                }
+                const msg = document.querySelector("#message")
+                if (msg) msg.innerHTML = `<div class="alert alert-error">${data.message}</div>`
             }
-         })
-       }
+        })
+    }
 })

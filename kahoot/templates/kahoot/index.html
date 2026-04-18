@@ -1,11 +1,93 @@
 {% extends "kahoot/layout.html" %}
 
 {% block body %}
+<style>
+  .hero {
+    text-align: center;
+    padding: 4rem 1rem 3rem;
+    animation: card-in 0.7s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  .hero-icon {
+    font-size: 4rem;
+    display: block;
+    margin-bottom: 1.2rem;
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+  @keyframes pulse-glow {
+    0%, 100% { text-shadow: 0 0 20px var(--glow-purple), 0 0 50px var(--glow-purple); }
+    50%       { text-shadow: 0 0 40px var(--glow-cyan),   0 0 80px var(--glow-cyan); }
+  }
+  .hero h1 { font-size: 3rem; margin-bottom: 0.8rem; }
+  .hero .tagline {
+    font-size: 1.2rem;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    margin-bottom: 2.5rem;
+    font-weight: 300;
+  }
+  .hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
 
- <h1>Welcome to our page!</h1>
- <h2>Before we proceed please:
-    <a href="{% url 'kahoot:login_view' %}">Log In</a>
-    or
-    <a href="{% url 'kahoot:register' %}">Register</a>
- </h2>
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.2rem;
+    margin-top: 3.5rem;
+  }
+  .feature-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.8rem 1.5rem;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+    animation: card-in 0.6s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  .feature-card:nth-child(1) { animation-delay: 0.1s; }
+  .feature-card:nth-child(2) { animation-delay: 0.2s; }
+  .feature-card:nth-child(3) { animation-delay: 0.3s; }
+  .feature-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(168,85,247,0.5);
+    box-shadow: 0 8px 32px rgba(124,58,237,0.3);
+  }
+  .feature-icon { font-size: 2.2rem; margin-bottom: 0.8rem; display: block; }
+  .feature-card h3 {
+    font-family: var(--font-head);
+    font-size: 0.9rem;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+  }
+  .feature-card p { color: var(--text-dim); font-size: 0.95rem; line-height: 1.5; }
+</style>
+
+<div class="hero">
+  <span class="hero-icon">&#9734;</span>
+  <h1>Welcome to GalaxyQuiz</h1>
+  <p class="tagline">Test your knowledge across the cosmos &mdash; compete, learn, conquer</p>
+  <div class="hero-actions">
+    <a href="{% url 'kahoot:register' %}" class="btn btn-primary">&#128640; Get Started</a>
+    <a href="{% url 'kahoot:login_view' %}" class="btn btn-ghost">Log In</a>
+  </div>
+</div>
+
+<div class="features">
+  <div class="feature-card">
+    <span class="feature-icon">&#128161;</span>
+    <h3>Diverse Categories</h3>
+    <p>From science to pop culture, explore quizzes across many galaxies of knowledge.</p>
+  </div>
+  <div class="feature-card">
+    <span class="feature-icon">&#127942;</span>
+    <h3>Leaderboard</h3>
+    <p>Climb the galactic rankings and prove you're the brightest star in the universe.</p>
+  </div>
+  <div class="feature-card">
+    <span class="feature-icon">&#128202;</span>
+    <h3>Track Progress</h3>
+    <p>Your quiz history and scores are saved so you can monitor your journey.</p>
+  </div>
+</div>
 {% endblock %}

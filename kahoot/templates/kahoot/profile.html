@@ -1,13 +1,108 @@
 {% extends "kahoot/layout.html" %}
+{# ─── PROFILE PAGE ─── #}
 
 {% block body %}
-   <h1>{{ user.first_name }} {{ user.last_name }}</h1>
-   <h2>History:</h2>
+<style>
+  .profile-header {
+    display: flex;
+    align-items: center;
+    gap: 1.8rem;
+    margin-bottom: 2.5rem;
+    flex-wrap: wrap;
+  }
+  .avatar {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7c3aed, #22d3ee); 
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-head);
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #fff;
+    flex-shrink: 0;
+    box-shadow: 0 0 24px rgba(124,58,237,0.5);
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+  @keyframes pulse-glow {
+    0%,100% { box-shadow: 0 0 24px rgba(124,58,237,0.5); }
+    50%      { box-shadow: 0 0 40px rgba(34,211,238,0.5); }
+  }
+  .profile-info h1 { font-size: 1.6rem; margin-bottom: 0.2rem; }
+  .profile-info p { color: var(--text-dim); }
 
-   <ul>
+  .section-title {
+    font-family: var(--font-head);
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 1rem;
+  }
+
+  .history-list { display: flex; flex-direction: column; gap: 0.75rem; }
+  .history-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.3rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    animation: card-in 0.5s cubic-bezier(0.22,1,0.36,1) both;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .history-item:hover {
+    border-color: rgba(168,85,247,0.4);
+    background: rgba(168,85,247,0.06);
+  }
+  .hist-cat {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-main);
+  }
+  .hist-cat span { font-size: 0.82rem; color: var(--text-dim); font-weight: 400; display: block; margin-top: 0.1rem; }
+  .hist-score {
+    font-family: var(--font-head);
+    font-size: 1.1rem;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-dim);
+  }
+  .empty-state .empty-icon { font-size: 3rem; display: block; margin-bottom: 1rem; opacity: 0.5; }
+</style>
+
+<div class="profile-header">
+  <div class="avatar">{{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}</div>
+  <div class="profile-info">
+    <h1>{{ user.first_name }} {{ user.last_name }}</h1>
+    <p>@{{ user.username }} &mdash; Space Explorer</p>
+  </div>
+</div>
+
+<p class="section-title">&#9733; Quiz History</p>
+
+<div class="history-list">
+  {% if scores %}
     {% for score in scores %}
-       <li>Category: {{ score.category.name }}</li>
-       <li>Score: {{ score.score }}</li>
+    <div class="history-item" style="animation-delay: {{ forloop.counter0 }}00ms">
+      <div class="hist-cat">
+        {{ score.category.name }}
+        <span>Category</span>
+      </div>
+      <div class="hist-score">&#9733; {{ score.score }}</div>
+    </div>
     {% endfor %}
-   </ul>
+  {% else %}
+    <div class="empty-state">
+      <span class="empty-icon">&#128202;</span>
+      <p>No quizzes completed yet.</p>
+      <a href="{% url 'kahoot:dashboard' %}" class="btn btn-primary" style="margin-top:1rem; display:inline-flex;">&#9654; Start a Quiz</a>
+    </div>
+  {% endif %}
+</div>
 {% endblock %}
