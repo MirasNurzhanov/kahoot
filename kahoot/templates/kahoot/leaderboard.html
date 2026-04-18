@@ -1,0 +1,22 @@
+{% extends "kahoot/layout.html" %}
+
+{% block body %}
+Leaderboard: 
+
+{{ data.0.category.name }}:
+
+    <ul>
+        {% for score in data.0.scores %}
+           <li>{{ score.user.username }} - {{ score.score }} </li>
+        {% endfor %}
+    </ul>
+
+{{ data.1.category.name }}:
+    <ul>
+        {% for score in data.1.scores %}
+           <li>{{ score.user.username }} - {{ score.score }} </li>
+        {% endfor %}
+    </ul>
+    
+
+{% endblock %}

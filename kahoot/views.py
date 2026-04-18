@@ -135,3 +135,18 @@ def profile_page(request):
             "user": user,
             "scores": scores
         })
+
+def leaderboard_page(request):
+    categories = Category.objects.all()
+
+    data = []
+    for category in categories:
+        top_scores = category.scores.order_by('-score')[:10]
+
+        data.append({
+            "category": category,
+            "scores": top_scores
+        })
+    return render(request, "kahoot/leaderboard.html" , {
+        "data": data
+    })

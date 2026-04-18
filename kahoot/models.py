@@ -27,8 +27,8 @@ class Answer(models.Model):
     
 class Score(models.Model):
     user = models.ForeignKey(User , on_delete=models.CASCADE , related_name = "scores")
-    category = models.ForeignKey(Category , on_delete=models.CASCADE)
-    score = models.IntegerField(max_length=10)
+    category = models.ForeignKey(Category , on_delete=models.CASCADE , related_name = "scores")
+    score = models.IntegerField()
 
 
     def __str__(self):
